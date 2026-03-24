@@ -29,3 +29,13 @@ void openFileDialog() {
         printf("\n[Sistem] Batal memilih file.\n");
     }
 }
+
+void quitEditor() {
+    char confirm;
+    printf("\nApakah kamu yakin ingin keluar? Pastikan perubahan sudah di-save. (y/n): ");
+    scanf(" %c", &confirm);
+    
+    if (confirm == 'y' || confirm == 'Y') {
+        printf("\nTerima kasih telah menggunakan Text Editor Doa Ibu!\n");
+        exit(0); 
+}
