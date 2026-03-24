@@ -39,3 +39,4 @@ void quitEditor() {
         printf("\nTerima kasih telah menggunakan Text Editor Doa Ibu!\n");
         exit(0); 
 }
+}
