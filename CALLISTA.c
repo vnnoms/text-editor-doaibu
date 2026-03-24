@@ -32,7 +32,7 @@ void openFileDialog() {
 
 void quitEditor() {
     char confirm;
-    printf("\nApakah kamu yakin ingin keluar? Pastikan perubahan sudah di-save. (y/n): ");
+    printf("\nApakah kamu yakin ingin keluar? (y/n): ");
     scanf(" %c", &confirm);
     
     if (confirm == 'y' || confirm == 'Y') {
