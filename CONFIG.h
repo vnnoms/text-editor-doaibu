@@ -18,7 +18,7 @@
 // define tab
 typedef struct {
     char **text;
-    // int total_char;
+    bool *isNewLine;
     int cursor_y;
     int cursor_x;
     char filename[MAX_PATH];
