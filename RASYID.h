@@ -3,36 +3,54 @@
 
 #include "CONFIG.h"
 
-// cursor 
+// CURSOR
 void hideCursor();
 void showCursor();
 void moveCursor(int row, int col);
 
-// clear
+// SET CURSOR
+void setPosToNTRow(Tab *TT,int y, char c);
+
+// CLEAR
 void clearScreen();
 void clearRows(int start, int end, int width);
 
-// render
+// RENDER 
 void renderHeader();
 void renderScroll(Tab *TT, int a);
 
-// tab
+// REDRAW 
+void redrawText(Tab *TT);
+
+// TAB
 void newTab();
 void swicthTab(Tab *TT, int tabLoc);
 
-// input handler
+// INPUT HANDLER
 void inputCharHandler(Tab *TT, int c);
 void arrowKeyHandler(Tab *TT, int c);
 
-// find and set Null Terminator possision
-void setPosNTInsert(int y, int x);
-void setPosNTDel(int y, int x);
+// FIND
+void findTailAfterCursor(Tab *TT,int cursor_y,int cursor_x);
+int findRowNLFromTop(Tab *TT, int cursor_y); // NL = New Line hehw
+int findLastRowFromDown(Tab *TT, int cursor_y);
 
-void findPosNT(Tab *TT, void (*setPosNT)(int, int));
-void setPosToNTRow(Tab *TT,int y, char c);
 
-// insert char
-void insert(Tab *TT, int c);
-void redrawInsertText(Tab *TT);
+// INSERT
+void insert(Tab *TT,int cursor_y,int cursor_x ,int c);
+
+// NEWLINE
+void newline(Tab *TT);
+
+// REMOVE
+void removeCache1Row(Tab *TT, int row, int col);
+
+// MOVE
+void moveDown1Row(Tab *TT, int start, int end);
+void moveDownStatus(Tab *TT, int down, int top);
 
 #endif
+
+
+
+
