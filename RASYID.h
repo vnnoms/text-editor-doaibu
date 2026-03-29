@@ -3,6 +3,19 @@
 
 #include "CONFIG.h"
 
+// OTHERS
+int isCtrlPressed();
+int isAltPressed();
+
+// FREE
+void freeTab(Tab *TT);
+
+// RESET
+void resetTab(Tab *TT);
+
+// SET
+void setStructEditor();
+
 // CURSOR
 void hideCursor();
 void showCursor();
@@ -23,8 +36,9 @@ void renderScroll(Tab *TT, int a);
 void redrawText(Tab *TT);
 
 // TAB
-void newTab();
-void swicthTab(Tab *TT, int tabLoc);
+void addTab();
+void deleteTab(int idx);
+void swicthTab(Tab **TT, int tabLoc);
 
 // INPUT HANDLER
 void inputCharHandler(Tab *TT, int c);
