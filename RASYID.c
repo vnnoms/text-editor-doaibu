@@ -3,6 +3,42 @@
 #include "RASYID.h"
 Editor E; 
 
+// cek apakah CTRL ditekan
+int isCtrlPressed() {
+    return (GetAsyncKeyState(VK_CONTROL) & 0x8000);
+}
+
+// cek apakah ALT ditekan
+int isAltPressed() {
+    return (GetAsyncKeyState(VK_MENU) & 0x8000);
+}
+
+// FREE
+
+void freeTab(Tab *TT) {
+    for(int i = 0; i < MAX_ROWS; i++) {
+        free(TT->text[i]);
+    }
+    free(TT->text);
+    free(TT->isNewLine);
+}
+
+// RESET
+
+void resetTab(Tab *TT) {
+    memset(TT, 0, sizeof(Tab));
+}
+
+// SET
+
+void setStructEditor() {
+    for(int i = 0; i < MAX_TABS; i++) resetTab(&E.tabs[i]);
+    E.curr_tab = 0;
+    E.n_tabs = 0;
+    E.pos_Y = 0;
+    E.pos_X = 0;
+}
+
 // CURSOR
 
 void hideCursor() {
@@ -35,8 +71,7 @@ void setPosToNTRow(Tab *TT,int y, char c) {
 // CLEAR
 
 void clearScreen() {
-    printf("\033[2J"); 
-    printf("\033[H"); 
+   system("cls");
 }
 
 void clearRows(int start, int end, int width) {
@@ -49,9 +84,19 @@ void clearRows(int start, int end, int width) {
 // RENDER
 
 void renderHeader() {
-    printf("Text Editor Doa ibu");
+    printf("\033[1;1H");   // pindah ke baris 1
+    printf("\033[K"); 
+
+    printf("Text Editor Doa ibu  ");
+    for(int i = 0; i < E.n_tabs; i++) {
+        if (i == E.curr_tab) printf("[Tab *%d] ", i +1);
+        else printf("[Tab %d] ", i+1);
+    }
+
     printf("\033[2;1H");
     printf("\n");
+
+    fflush(stdout);
 }
 
 void renderScroll(Tab *TT, int a) {
@@ -78,7 +123,7 @@ void redrawText(Tab *TT) {
 
 // TAB
 
-void newTab() {
+void addTab() {
 	if(E.n_tabs >= MAX_TABS) return; 
     Tab *TT = &E.tabs[E.n_tabs];       
 
@@ -91,31 +136,97 @@ void newTab() {
 
     TT->isNewLine = malloc(sizeof(bool*) * MAX_ROWS);
     for(int i = 0; i < MAX_ROWS; i++) TT->isNewLine[i] = false;
-	
+
     TT->isNewLine[0] = true;
-    TT->cursor_y = 0;
-    TT->cursor_x = 0;
-    TT->filename[0] = '\0';        
 
     E.curr_tab = E.n_tabs;
     (E.n_tabs)++;
 }
 
-void swicthTab(Tab *TT, int tabLoc) {
-    TT = &E.tabs[tabLoc];
+void deleteTab(int idx) {
+    if(idx != 0 || E.tabs[idx].text[0][0] != '\0' || E.n_tabs > 0) {
+        Tab *TT = &E.tabs[idx];
+
+        if(E.n_tabs == 1 && idx == 0) {
+            for(int i=0; i<MAX_ROWS; i++){
+                for(int j=0; j<MAX_COLS; j++)
+                    TT->text[i][j] = '\0';  
+            }
+
+            for(int i = 0; i < MAX_ROWS; i++) TT->isNewLine[i] = false;
+            TT->isNewLine[0] = true;
+            TT->cursor_y = 0;
+            TT->cursor_x = 0;
+            TT->filename[0] = '\0';
+
+            return;
+        }
+
+        // free + reset dulu
+        freeTab(TT);
+        resetTab(&E.tabs[idx]);
+
+        // geser
+        for(int i = idx; i < E.n_tabs - 1; i++) {
+            E.tabs[i] = E.tabs[i+1];
+        }
+
+        if(idx < E.n_tabs - 1) {
+            Tab *LastTab = &E.tabs[E.n_tabs - 1];
+            resetTab(LastTab);
+        } else if(idx > 0) {
+            E.curr_tab--;
+        }
+
+        if(E.n_tabs>1) E.n_tabs--;
+    }
+}
+
+void swicthTab(Tab **TT, int tabLoc) {
+    if(tabLoc >= 0 && tabLoc < E.n_tabs) {
+        clearScreen();
+
+        *TT = &E.tabs[tabLoc];
+        E.curr_tab = tabLoc;
+
+        renderHeader();
+        redrawText(*TT);
+    } 
 }
 
 // INPUT HANDLER
 
 void inputCharHandler(Tab *TT, int c) {
     switch (c) { 
-        // ctrl + q 
+        // ESC
         case 17 : {
+            for(int i=0; i<E.n_tabs; i++) freeTab(&E.tabs[i]);
             exit(0);
             break;
         }
 
         default:
+
+            if(tolower(c) == 'd') {
+                if (isAltPressed()) {
+                    deleteTab(E.curr_tab);
+                    swicthTab(&TT, E.curr_tab);
+                }
+            }
+            if (c >= '1' && c <= '5') {
+                if (isAltPressed()) {
+                    int tab = (c - '0') - 1;
+                    swicthTab(&TT, tab);
+                }
+            }
+
+            if (c == 1) { // Ctrl + A
+                swicthTab(&TT, E.curr_tab - 1);
+            }
+
+            if (c == 4) { // Ctrl + D
+                swicthTab(&TT, E.curr_tab + 1);
+            }
 
             // Enter
             if(c == 13) {
@@ -123,6 +234,11 @@ void inputCharHandler(Tab *TT, int c) {
                     newline(TT);
                     redrawText(TT);
                 }
+            }
+
+            if(c == 14) {
+                addTab();
+                swicthTab(&TT, E.curr_tab);
             }
 
             // ESC -> keluar text editor
@@ -133,10 +249,12 @@ void inputCharHandler(Tab *TT, int c) {
 
             // add character
             if (c >= 32 && c <= 126) {
-                findTailAfterCursor(TT, TT->cursor_y, TT->cursor_x);
-                if(E.pos_Y >= 0 && !TT->isNewLine[MAX_ROWS-1]) {
-                    insert(TT, TT->cursor_y, TT->cursor_x, c);
-                    redrawText(TT);
+                if (!isAltPressed()) {
+                    findTailAfterCursor(TT, TT->cursor_y, TT->cursor_x);
+                    if(E.pos_Y >= 0 && !TT->isNewLine[MAX_ROWS-1]) {
+                        insert(TT, TT->cursor_y, TT->cursor_x, c);
+                        redrawText(TT);
+                    }
                 }
                 
             }
