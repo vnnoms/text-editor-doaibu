@@ -198,12 +198,40 @@ void swicthTab(Tab **TT, int tabLoc) {
 
 void inputCharHandler(Tab *TT, int c) {
     switch (c) { 
-        // ESC
-        case 17 : {
+        case  1 : { // Ctrl + A
+            swicthTab(&TT, E.curr_tab - 1);
+            break;
+        }
+
+        case  4 : { // Ctrl + D
+            swicthTab(&TT, E.curr_tab + 1);
+            break;
+        }
+
+        // Enter
+        case  13: {
+            if(!TT->isNewLine[MAX_ROWS-1]) {
+                newline(TT);
+                redrawText(TT);
+            }
+
+            break;
+        }
+
+        case  14: {
+            addTab();
+            swicthTab(&TT, E.curr_tab);
+            break;
+        }
+
+        // ESC -> keluar text editor
+        case  27: {
             for(int i=0; i<E.n_tabs; i++) freeTab(&E.tabs[i]);
+            clearScreen();
             exit(0);
             break;
         }
+
 
         default:
 
@@ -213,38 +241,12 @@ void inputCharHandler(Tab *TT, int c) {
                     swicthTab(&TT, E.curr_tab);
                 }
             }
+
             if (c >= '1' && c <= '5') {
                 if (isAltPressed()) {
                     int tab = (c - '0') - 1;
                     swicthTab(&TT, tab);
                 }
-            }
-
-            if (c == 1) { // Ctrl + A
-                swicthTab(&TT, E.curr_tab - 1);
-            }
-
-            if (c == 4) { // Ctrl + D
-                swicthTab(&TT, E.curr_tab + 1);
-            }
-
-            // Enter
-            if(c == 13) {
-                if(!TT->isNewLine[MAX_ROWS-1]) {
-                    newline(TT);
-                    redrawText(TT);
-                }
-            }
-
-            if(c == 14) {
-                addTab();
-                swicthTab(&TT, E.curr_tab);
-            }
-
-            // ESC -> keluar text editor
-            if (c == 27) {
-                clearScreen();
-                exit(0);
             }
 
             // add character
