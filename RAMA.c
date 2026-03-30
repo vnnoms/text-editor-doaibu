@@ -51,10 +51,8 @@ bool tampilkanDialogSimpan(char *alamat_tujuan) {
     OPENFILENAME jendela_simpan;
     char nama_file_pilihan[MAX_PATH] = {0};
 
-    // Bersihkan memori struktur data
     ZeroMemory(&jendela_simpan, sizeof(jendela_simpan));
     
-    // Konfigurasi teknis jendela dialog Windows
     jendela_simpan.lStructSize = sizeof(jendela_simpan);
     jendela_simpan.hwndOwner = GetConsoleWindow();
     jendela_simpan.lpstrFile = nama_file_pilihan;
@@ -63,18 +61,44 @@ bool tampilkanDialogSimpan(char *alamat_tujuan) {
     jendela_simpan.nFilterIndex = 1;
     jendela_simpan.Flags = OFN_PATHMUSTEXIST | OFN_OVERWRITEPROMPT | OFN_NOCHANGEDIR;
 
-    // Eksekusi pemanggilan jendela dialog
     if (GetSaveFileName(&jendela_simpan)) {
         
-        // Pastikan format .txt terpasang
         if (strstr(nama_file_pilihan, ".txt") == NULL && strstr(nama_file_pilihan, ".TXT") == NULL) {
             strcat(nama_file_pilihan, ".txt");
         }
         
-        // Salin hasil pilihan ke parameter output
         strcpy(alamat_tujuan, nama_file_pilihan);
         return true;
     }
     
     return false;
+}
+
+void saveFile() {
+    Tab *tab_aktif = &E.tabs[E.curr_tab];
+
+    if (tab_aktif->filename[0] == '\0') {
+        saveFileAs();
+        return;
+    }
+
+    if (tulisDataKeFile(tab_aktif, tab_aktif->filename)) {
+        MessageBox(NULL, "File Berhasil Disimpan!", "Notepad Doa Ibu", MB_OK | MB_ICONINFORMATION);
+    } else {
+        MessageBox(NULL, "Gagal Menulis File!", "Error", MB_OK | MB_ICONERROR);
+    }
+}
+
+void saveFileAs() {
+    Tab *tab_aktif = &E.tabs[E.curr_tab];
+    char alamat_baru[MAX_PATH];
+
+    if (tampilkanDialogSimpan(alamat_baru)) {
+        strcpy(tab_aktif->filename, alamat_baru);
+        simpanFile(); 
+    }
+    
+    clearScreen();
+    renderHeader();
+    redrawText(tab_aktif);
 }
