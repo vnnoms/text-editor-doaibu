@@ -3,19 +3,28 @@
 #include "RASYID.h"  
 #include "RAMA.h"
 
-void newline(Tab *TT) {
-    if (TT->cursor_y < MAX_ROWS - 1) {
-        
-        for (int i = MAX_ROWS - 1; i > TT->cursor_y + 1; i--) {
-            strcpy(TT->text[i], TT->text[i-1]);
-        }
-
-        strcpy(TT->text[TT->cursor_y + 1], &TT->text[TT->cursor_y][TT->cursor_x]);
-        TT->text[TT->cursor_y][TT->cursor_x] = '\0';
-
-        TT->cursor_y++;
-        TT->cursor_x = 0;
-
-	redrawInsertText(TT); 
+void clearSpecificRow(Tab *TT, int baris) {
+    for (int kolom = 0; kolom < MAX_COLS; kolom++) {
+        TT->text[baris][kolom] = '\0';
     }
+}
+
+void shiftRowsUp(Tab *TT, int start_row) {
+    int lastRow = findLastRowFromDown(TT, start_row);
+
+    for (int y = start_row; y < lastRow; y++) {
+        strcpy(TT->text[y], TT->text[y + 1]); 
+        TT->isNewLine[y] = TT->isNewLine[y + 1];
+    }
+    
+    clearSpecificRow(TT, lastRow);
+    TT->isNewLine[lastRow] = false;
+}
+
+void deleteLine(Tab *TT) {
+    int curr_y = TT->cursor_y;
+    clearSpecificRow(TT, curr_y);
+    shiftRowsUp(TT, curr_y);
+    TT->cursor_x = 0;
+    redrawText(TT);
 }
