@@ -70,7 +70,6 @@ bool tampilkanDialogSimpan(char *alamat_tujuan) {
         strcpy(alamat_tujuan, nama_file_pilihan);
         return true;
     }
-    
     return false;
 }
 
@@ -97,8 +96,9 @@ void saveFileAs() {
         strcpy(tab_aktif->filename, alamat_baru);
         simpanFile(); 
     }
-    
     clearScreen();
     renderHeader();
     redrawText(tab_aktif);
 }
+
+
