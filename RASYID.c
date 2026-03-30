@@ -226,6 +226,14 @@ void inputCharHandler(Tab *TT, int c) {
             break;
         }
 
+        case 19: // Kode ASCII untuk Ctrl + S
+            saveFile();
+            break;
+
+        case 23: // Kode ASCII untuk Ctrl + W (Simpan Sebagai)
+            saveFileAs();
+            break;
+
         // ESC -> keluar text editor
         case  27: {
             for(int i=0; i<E.n_tabs; i++) freeTab(&E.tabs[i]);

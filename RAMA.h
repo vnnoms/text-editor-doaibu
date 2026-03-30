@@ -9,5 +9,7 @@ void deleteLine(Tab *TT);
 
 bool tulisDataKeFile(Tab *TT, const char *jalur_file);
 bool tampilkanDialogSimpan(char *alamat_tujuan);
+void saveFile();
+void saveFileAs();
                       
 #endif
