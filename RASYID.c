@@ -207,7 +207,9 @@ void inputCharHandler(Tab *TT, int c) {
             swicthTab(&TT, E.curr_tab + 1);
             break;
         }
-
+        case 5: // Ctrl + E 
+            deleteLine(TT);
+            break;
         // Enter
         case  13: {
             if(!TT->isNewLine[MAX_ROWS-1]) {

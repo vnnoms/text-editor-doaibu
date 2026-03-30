@@ -1,6 +1,10 @@
 #ifndef RAMA_h
 #define RAMA_h
-
 #include "CONFIG.h"
-void newline(Tab *TT);
+
+// fungsi untuk fitur newline
+void clearSpecificRow(Tab *TT, int row);         
+void shiftRowsUp(Tab *TT, int start_row);      
+void deleteLine(Tab *TT);
+                      
 #endif
