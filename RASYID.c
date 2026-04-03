@@ -1,7 +1,10 @@
 #include <stdio.h>
 #include "CONFIG.h"
 #include "RASYID.h"
+#include "RAMA.h"
 Editor E; 
+
+// OTHERS
 
 // cek apakah CTRL ditekan
 int isCtrlPressed() {
@@ -207,9 +210,21 @@ void inputCharHandler(Tab *TT, int c) {
             swicthTab(&TT, E.curr_tab + 1);
             break;
         }
-        case 5: // Ctrl + E 
+        case 5: {// Ctrl + E 
             deleteLine(TT);
             break;
+        }
+
+        case 8: {// 
+            findTailAfterCursor(TT, TT->cursor_y, TT->cursor_x);
+            if(E.pos_Y >= 0) {
+                delete(TT, TT->cursor_y, TT->cursor_x);
+                redrawText(TT);
+            }
+
+            break;
+        }
+
         // Enter
         case  13: {
             if(!TT->isNewLine[MAX_ROWS-1]) {
@@ -372,13 +387,7 @@ void findTailAfterCursor(Tab *TT, int cursor_y, int cursor_x) {
         }
     }
 
-    // CASE 3: kalau baris ternyata kosong
-    // if (lastX == -1) {
-    //     lastY = cursor_y;
-    //     lastX = cursor_x;
-    // }
-
-    // CASE 4: FULL BUFFER (ga ada space lagi)
+    // CASE 3: FULL BUFFER (ga ada space lagi)
     if (lastY == MAX_ROWS - 1 && lastX == MAX_COLS - 2 &&
         text[lastY][lastX] != '\0') {
 
@@ -409,64 +418,13 @@ int findLastRowFromDown(Tab *TT, int cursor_y) {
     return cursor_y;
 }
 
-// INSERT
-
-void insert(Tab *TT, int cursor_y, int cursor_x, int c) {
-    int pos_X =  E.pos_X;
-    int pos_Y = E.pos_Y;
+int findNTXInRow(Tab *TT, int y) {
     char **text = TT->text;
-    int rowNL = -1;
-    
-    // Jika posisi karakter berada di karakter kosong, maka tidak diswap
-    if(text[cursor_y][cursor_x] != '\0') {
-
-        // swap character
-        for(int y = pos_Y; y >= cursor_y; y--) {
-            int limit_x = (y == cursor_y) ? cursor_x : 0;
-
-            for(int x = pos_X; x >= limit_x; x--) {
-                if(y+1 < MAX_ROWS && x == MAX_COLS-2) {
-
-                    // jika kursor berada di baris ujung karakter kalimat, di kolom MAX_COLS - 1,  dan dibawahnya adalah baris independent (isNewline = true),
-                    // maka semua baris dibawah baris ini turun sebanyak 1 baris
-
-                    if(y == pos_Y && (rowNL = findRowNLFromTop(TT, y)) >= 0){
-                        int lastRow = findLastRowFromDown(TT, y);
-                        if(lastRow == MAX_ROWS-1) return;
-                        // Note: move mulai dari last row
-                        moveDown1Row(TT, lastRow, rowNL);
-                    }
-                    text[y+1][0] = text[y][x];
-                }else if (x+1 < MAX_COLS-1) {
-                    text[y][x+1] = text[y][x];
-                }
-            }
-
-            pos_X = MAX_COLS-2;
-        }
-    } else if (cursor_x == MAX_COLS-1) {
-        // jika kursor berada di kolom MAX_COLS - 1 dan dibawahnya adalah baris independent (isNewline = true),
-        // maka semua baris dibawah baris ini turun sebanyak 1 baris
-        if((rowNL = findRowNLFromTop(TT, cursor_y)) >= 0){
-            int lastRow = findLastRowFromDown(TT, cursor_y);
-            if(lastRow == MAX_ROWS-1) return;
-            // Note: move mulai dari last row
-            moveDown1Row(TT, lastRow, rowNL);
-        }
+    for(int x = 0; x < MAX_COLS -1; x++) {
+        if(text[y][x] == '\0') return x;
     }
 
-    // set cursor menuju baris di bawahnya dan pada kolom paling pertama,
-    // jika kolom kursor = MAX_COLS - 1
-    if(TT->cursor_x >= MAX_COLS-1) {
-        TT->cursor_x = 0;
-        TT->cursor_y++;
-    }
-
-    // Menambahkan karakter
-    text[TT->cursor_y][TT->cursor_x] = c;
-
-    // set kolom cursor_x ke kolom sebelahanya (setelah insert karakter)
-    TT->cursor_x++;
+    return -1;
 }
 
 // NEWLINE
@@ -487,7 +445,7 @@ void newline(Tab *TT) {
         // kalau baris bawah ada newline -> geser dulu
         if(NL[cursor_y+1] == true) {
             int lastRow = findLastRowFromDown(TT, cursor_y);
-            moveDown1Row(TT, lastRow, cursor_y+1);
+            moveDown1Row(TT, cursor_y+1, lastRow);
         }
 
         // pindahin karakter setelah kursor (yang dienter) dari BELAKANG  ke depan (baris independent baru)
@@ -514,43 +472,313 @@ void newline(Tab *TT) {
     }
 }
 
+// MERGE
+
+void merge2Rows(Tab *TT, int cursor_y, int cursor_x) {
+    int pos_Y = E.pos_Y;
+    int pos_X = E.pos_X;
+    char **text = TT->text;
+    int rowNL = -1;
+
+    int merged_Y = cursor_y - 1;
+    int merged_X = findNTXInRow(TT, merged_Y);
+    int init_merged_Y = merged_Y;
+    int init_merged_X = merged_X;
+
+    if(merged_X >= 0){
+        // swap character
+        for(int y = cursor_y; y <= pos_Y; y++) {
+            int limit_x = (y == pos_Y) ? pos_X : MAX_COLS - 2;
+
+            for(int x = cursor_x; x <= limit_x; x++) {
+                if(merged_X == MAX_COLS - 1) {
+                    merged_X = 0;
+                    merged_Y++;    
+                }
+
+                text[merged_Y][merged_X] = text[y][x];
+
+                merged_X++;
+            }
+
+            cursor_x = 0;
+        }
+
+        TT->isNewLine[cursor_y] = false;
+
+        if(merged_Y == pos_Y - 1) {
+            removeCache1Row(TT, merged_Y, merged_X);
+            removeCache1Row(TT, pos_Y, 0);
+
+            if((rowNL = findRowNLFromTop(TT, merged_Y + 1)) >= 0) {
+                int lastRow = findLastRowFromDown(TT, merged_Y);
+                moveUp1Row(TT, rowNL, lastRow);
+            }
+        } else {
+            removeCache1Row(TT, merged_Y, merged_X);
+        }
+
+        TT->cursor_x = init_merged_X;
+        TT->cursor_y = init_merged_Y;
+    }
+}
+
+
+// INSERT
+
+void insert(Tab *TT, int cursor_y, int cursor_x, int c) {
+    int pos_X =  E.pos_X;
+    int pos_Y = E.pos_Y;
+    char **text = TT->text;
+    int rowNL = -1;
+    
+    // Jika posisi karakter berada di karakter kosong, maka tidak diswap
+    if(text[cursor_y][cursor_x] != '\0' || (cursor_x == MAX_COLS-1 && text[cursor_y+1][0] !=0 && !TT->isNewLine[cursor_y+1])) {
+        swipeRight(TT, cursor_y, cursor_x);
+    } else if (cursor_x == MAX_COLS-1) {
+
+        // jika kursor berada di kolom MAX_COLS - 1 dan dibawahnya adalah baris independent (isNewline = true),
+        // maka semua baris dibawah baris ini turun sebanyak 1 baris
+        if((rowNL = findRowNLFromTop(TT, cursor_y)) >= 0){
+            int lastRow = findLastRowFromDown(TT, cursor_y);
+            if(lastRow == MAX_ROWS-1) return;
+            // Note: move mulai dari last row
+            moveDown1Row(TT, rowNL, lastRow);
+        }
+    }
+
+    // set cursor menuju baris di bawahnya dan pada kolom paling pertama,
+    // jika kolom kursor = MAX_COLS - 1
+    if(TT->cursor_x >= MAX_COLS-1) {
+        TT->cursor_x = 0;
+        TT->cursor_y++;
+    }
+
+    // Menambahkan karakter
+    text[TT->cursor_y][TT->cursor_x] = c;
+
+    // set kolom cursor_x ke kolom sebelahanya (setelah insert karakter)
+    TT->cursor_x++;
+}
+
+// DELETE
+
+void delete(Tab *TT, int cursor_y, int cursor_x) {
+    char **text = TT->text;
+
+    if (cursor_y == 0 && cursor_x == 0) return;
+
+    int rowNL = -1;
+    int isMerge = 0;
+
+    if(cursor_x <= 0) {
+        if(TT->isNewLine[cursor_y]) {
+            if(TT->isNewLine[cursor_y - 1] && text[cursor_y - 1][0] == '\0') {
+                int lastRow = findLastRowFromDown(TT, cursor_y);
+                moveUp1Row(TT, cursor_y, lastRow);
+
+                TT->cursor_y--;
+                return;
+            } else if(text[cursor_y][0] == '\0' && !TT->isNewLine[cursor_y]){
+                int x = -1;
+                TT->cursor_y = cursor_y - 1;
+                
+                if((x = findNTXInRow(TT, TT->cursor_y)) >= 0) {
+                    TT->cursor_x = x;
+                } else {
+                    TT->cursor_x = MAX_COLS - 1;
+                }
+
+                TT->isNewLine[cursor_y] = false;
+                int lastRow = findLastRowFromDown(TT, cursor_y);
+                moveUp1Row(TT, cursor_y + 1, lastRow);
+
+                return;
+                
+            } else if (text[cursor_y - 1][MAX_COLS - 2] != '\0') {
+                TT->isNewLine[cursor_y] = false;
+
+                return;
+            } else isMerge = 1;
+        }
+    }
+
+    if(isMerge < 1) {
+        if(TT->cursor_x <= 0) {
+            // ini tandain
+            TT->cursor_x = MAX_COLS-2;
+            TT->cursor_y--;
+            
+        } else TT->cursor_x--;
+        
+
+        // Delete karakter
+        text[TT->cursor_y][TT->cursor_x] = '\0';
+
+        if(text[cursor_y][cursor_x] != '\0' || (cursor_x == MAX_COLS-1 && text[cursor_y+1][0] !=0 && !TT->isNewLine[cursor_y+1])) {
+            swipeleft(TT, cursor_y, cursor_x);
+        } else if(TT->cursor_x <= 0 && !TT->isNewLine[TT->cursor_y]) {
+            TT->cursor_x = MAX_COLS-1;
+            TT->cursor_y--;
+
+            if((rowNL = findRowNLFromTop(TT, cursor_y + 1)) >= 0) {
+                int lastRow = findLastRowFromDown(TT, cursor_y);
+                moveUp1Row(TT, rowNL, lastRow);
+            }                   
+        }
+
+    } else {
+        merge2Rows(TT, cursor_y, cursor_x);
+    }    
+}
+
 // REMOVE
 
-// Hapus semua karakter yang berada di setelah kursor yg sedang dienter
 void removeCache1Row(Tab *TT, int row, int col) {
     char **text = TT->text;
-    for(int x = col; x < MAX_COLS; x++) {
+    for(int x = col; x < MAX_COLS-1; x++) {
         if (text[row][x] == '\0') break;
         text[row][x] = '\0';
     }
 }
 
+// SWIPE
+
+void swipeleft(Tab *TT, int cursor_y, int cursor_x) {
+    int pos_Y = E.pos_Y;
+    int pos_X = E.pos_X;
+    char **text = TT->text;
+
+    int needMoveUp = 0;
+    int rowNL = -1;
+
+    for(int y = cursor_y; y <= pos_Y; y++) {
+        int limit_x = (y == pos_Y) ? pos_X : MAX_COLS - 1;
+
+        for(int x = cursor_x; x <= limit_x; x++) {
+
+            if(x == MAX_COLS-1) {
+                text[y][MAX_COLS-2] = text[y+1][0];
+
+                if(y == pos_Y - 1) {
+                    needMoveUp = 1;
+                }
+
+            } else if(x == 0) {
+                text[y-1][MAX_COLS-2] = text[y][0];
+
+                if(y == pos_Y) {
+                    needMoveUp = 1;
+                }
+            } else {
+                text[y][x-1] = text[y][x];
+            }
+
+            if(y == pos_Y - 1) {
+                needMoveUp = 1;
+            }
+        }
+
+        cursor_x = 1;
+    }
+
+    // hapus tail
+    text[pos_Y][pos_X] = '\0';
+
+    // EKSEKUSI SEKALI DI AKHIR
+    if(needMoveUp && pos_X == 0) {
+        rowNL = findRowNLFromTop(TT, pos_Y);
+        if(rowNL >= 0) {
+            int lastRow = findLastRowFromDown(TT, pos_Y);
+            moveUp1Row(TT, rowNL, lastRow);
+        }
+    }
+}
+
+void swipeRight(Tab *TT, int cursor_y, int cursor_x) {
+    int pos_X =  E.pos_X;
+    int pos_Y = E.pos_Y;
+    char **text = TT->text;
+    int rowNL = -1;
+
+    // swap character
+    for(int y = pos_Y; y >= cursor_y; y--) {
+        int limit_x = (y == cursor_y) ? cursor_x : 0;
+
+        for(int x = pos_X; x >= limit_x; x--) {
+            if(y+1 < MAX_ROWS && x == MAX_COLS-2) {
+
+                // jika kursor berada di baris ujung karakter kalimat, di kolom MAX_COLS - 1,  dan dibawahnya adalah baris independent (isNewline = true),
+                // maka semua baris dibawah baris ini turun sebanyak 1 baris
+
+                if(y == pos_Y && (rowNL = findRowNLFromTop(TT, y)) >= 0){
+                    int lastRow = findLastRowFromDown(TT, y);
+                    if(lastRow == MAX_ROWS-1) return;
+                    // Note: move mulai dari last row
+                    moveDown1Row(TT, rowNL, lastRow);
+                }
+                text[y+1][0] = text[y][x];
+            }else if (x+1 < MAX_COLS-1) {
+                text[y][x+1] = text[y][x];
+            }
+        }
+
+        pos_X = MAX_COLS-2;
+    }
+}
 
 // MOVE
 
 // turun 1 baris
-void moveDown1Row(Tab *TT, int down, int top) {
-    // start from down (move from down) :v
+void moveDown1Row(Tab *TT, int top, int bottom) {
+    // start from bottom (move from bottom) :v
+    if(bottom == MAX_ROWS-1) return;
+
     char **text = TT->text;
-    for(int y=down; y >= top; y--) {
+    for(int y=bottom; y >= top; y--) {
         for(int x = 0; x < MAX_COLS; x++) {
             text[y+1][x] = text[y][x];
         }
     }
 
-    moveDownStatus(TT, down, top);
+    moveDownStatus(TT, top, bottom);
     removeCache1Row(TT, top, 0);    
 }
 
-// setelah nurunin baris, status isNewline juga perlu turun
-void moveDownStatus(Tab *TT, int down, int top) {
-    bool *NL = TT->isNewLine;
-    for(int i = down; i >= top; i--) {
-        if(i == MAX_ROWS-1) return;
+void moveDownStatus(Tab *TT, int top, int bottom) {
+    if(bottom == MAX_ROWS-1) return;
 
-        if(NL[i] == true) {
-            NL[i+1] = true;
-            NL[i] = false;            
+    bool *NL = TT->isNewLine;
+
+    for(int i = bottom; i >= top; i--) {
+        NL[i+1] = NL[i];
+    }
+
+    NL[top] = false;
+}
+
+void moveUp1Row(Tab *TT, int top, int bottom) {
+    if(top == 0) return;
+
+    char **text = TT->text;
+    for(int y=top; y <= bottom; y++) {
+        for(int x = 0; x < MAX_COLS; x++) {
+            text[y-1][x] = text[y][x];
         }
     }
+
+    moveUpStatus(TT, top, bottom);
+    removeCache1Row(TT, bottom, 0);    
+}
+
+void moveUpStatus(Tab *TT, int top, int bottom) {
+    if(top == 0) return;
+
+    bool *NL = TT->isNewLine;
+
+    for(int i = top; i <= bottom; i++) {
+        NL[i-1] = NL[i];   // copy semua, bukan cuma true
+    }
+
+    NL[bottom] = false; // clear terakhir
 }

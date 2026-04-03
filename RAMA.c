@@ -94,7 +94,7 @@ void saveFileAs() {
 
     if (tampilkanDialogSimpan(alamat_baru)) {
         strcpy(tab_aktif->filename, alamat_baru);
-        simpanFile(); 
+        // simpanFile(); 
     }
     clearScreen();
     renderHeader();
