@@ -134,3 +134,24 @@ int countTotalWords(Tab *TT) {
     return count;
 }
 
+
+int countCurrentRowChars(Tab *TT) {
+    int count = 0;
+    int row = TT->cursor_y; 
+
+    for (int j = 0; j < MAX_COLS; j++) {
+        if (TT->text[row][j] == '\0') break; 
+        count++;
+    }
+    return count;
+}
+
+int countActiveLines(Tab *TT) {
+    int barisTerakhir = findLastRowFromDown(TT, 0);
+    
+    if (barisTerakhir == 0 && TT->text[0][0] == '\0' && !TT->isNewLine[0]) {
+        return 0;
+    }
+    
+    return barisTerakhir + 1;
+}
