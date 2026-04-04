@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include "CONFIG.h"
 #include "RASYID.h"
+#include "CALLISTA.h"
 Editor E; 
 
 // cursor
@@ -79,6 +80,10 @@ void inputCharHandler(Tab *TT, int c) {
             break;
         }
 
+        case 6 : {
+            findText(TT);
+            break;
+        }
         default:
             // add character
             if (c >= 32 && c <= 126) {

@@ -5,6 +5,7 @@
 #include <ctype.h>
 #include "CONFIG.h"
 #include "RAMA.h"
+#include "RASYID.h"
 
 #define MAX_BARIS 100
 #define MAX_KARAKTER 255
@@ -43,7 +44,9 @@ void quitEditor() {
     }
 }
 
-void findText(Tab *TT) {
+void findText(Tab *TT) { //buat dia connected ke fitur replace teks. logika salah satu fitur kalau udah find dan mau replace gak perlu find lagi.
+    //higlight ketika di baris yang akan diedit, dan apabila sudah di edit langsung find kalimat sebelumnya yang telah ditemukan dan telah diganti 
+    //akan tidak terdeteksi lagi oleh mesin pencari. 
     char cari[100];
     printf("\n>> Masukkan kata utuh yang dicari: ");
     scanf(" %[^\n]", cari);
