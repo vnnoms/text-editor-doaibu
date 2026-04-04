@@ -21,6 +21,7 @@ typedef struct {
     // int total_char;
     int cursor_y;
     int cursor_x;
+    bool *isNewLine;
     char filename[MAX_PATH];
 } Tab;
 
