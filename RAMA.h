@@ -14,5 +14,7 @@ void saveFileAs();
                
 int countTotalChars(Tab *TT);
 int countTotalWords(Tab *TT);
+int countCurrentRowChars(Tab *TT);
+int countActiveLines(Tab *TT);
 
 #endif
