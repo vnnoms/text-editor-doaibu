@@ -94,11 +94,43 @@ void saveFileAs() {
 
     if (tampilkanDialogSimpan(alamat_baru)) {
         strcpy(tab_aktif->filename, alamat_baru);
-        // simpanFile(); 
+        saveFile(); 
     }
     clearScreen();
     renderHeader();
     redrawText(tab_aktif);
 }
 
+int countTotalChars(Tab *TT) {
+    int count = 0;
+    int barisTerakhir = findLastRowFromDown(TT, 0);
+
+    for (int i = 0; i <= barisTerakhir; i++) {
+        for (int j = 0; j < MAX_COLS; j++) {
+            if (TT->text[i][j] == '\0') break; 
+            count++;
+        }
+    }
+    return count;
+}
+
+int countTotalWords(Tab *TT) {
+    int count = 0;
+    bool inWord = false;
+    int lastRow = findLastRowFromDown(TT, 0); 
+
+    for (int i = 0; i <= lastRow; i++) {
+        for (int j = 0; j < MAX_COLS; j++) {
+            char c = TT->text[i][j];
+            if (c == '\0') break; 
+            if (isspace(c)) {
+                inWord = false;
+            } else if (!inWord) {
+                inWord = true;
+                count++;
+            }
+        }
+    }
+    return count;
+}
 
