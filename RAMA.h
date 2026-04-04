@@ -11,5 +11,8 @@ bool tulisDataKeFile(Tab *TT, const char *jalur_file);
 bool tampilkanDialogSimpan(char *alamat_tujuan);
 void saveFile();
 void saveFileAs();
-                      
+               
+int countTotalChars(Tab *TT);
+int countTotalWords(Tab *TT);
+
 #endif
