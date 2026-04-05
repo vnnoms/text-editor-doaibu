@@ -82,6 +82,14 @@ void inputCharHandler(Tab *TT, int c) {
 
         case 6 : {
             findText(TT);
+            clearScreen(); 
+            findText(TT);
+            printf("\nTekan tombol apa saja untuk kembali ke editor...");
+            _getch(); 
+            
+            clearScreen();
+            renderHeader();
+            redrawText(TT);
             break;
         }
         default:
