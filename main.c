@@ -3,13 +3,16 @@
 #include "RASYID.h"
 
 int main() {
-    newTab();
-    Tab *TT = &E.tabs[E.curr_tab];
+    setStructEditor();
+    addTab();
+    // Tab *TT = &E.tabs[E.curr_tab];
     
     clearScreen();
     renderHeader();
 
     while(1) {
+        Tab *TT = &E.tabs[E.curr_tab];
+        
         int c = _getch();
 
         if (c == 0 || c == 224) {
