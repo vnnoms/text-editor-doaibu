@@ -1,12 +1,11 @@
 #include <stdio.h>
 #include "CONFIG.h"
 #include "RASYID.h"
+#include "RAMA.h"
 
 int main() {
     setStructEditor();
     addTab();
-    // Tab *TT = &E.tabs[E.curr_tab];
-    
     clearScreen();
     renderHeader();
 
@@ -30,6 +29,7 @@ int main() {
         } else {
             inputCharHandler(TT, c);
         }
+        renderFooter(TT);
     }
 
     return 0;
