@@ -33,6 +33,7 @@ void setPosToNTRow(Tab *TT,int y, char c);
 
 // insert char
 void insert(Tab *TT, int c);
-void redrawInsertText(Tab *TT);
+// void redrawInsertText(Tab *TT);
+void redrawText(TT);
 
 #endif
