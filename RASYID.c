@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include "CONFIG.h"
 #include "RASYID.h"
+#include "CALLISTA.h"
 #include "RAMA.h"
 Editor E; 
 
@@ -258,6 +259,18 @@ void inputCharHandler(Tab *TT, int c) {
         }
 
 
+        case 6 : {
+            clearScreen(); 
+            findText(TT);
+            
+            printf("\nTekan tombol apa saja untuk kembali ke editor...");
+            _getch(); 
+            
+            clearScreen();
+            renderHeader();
+            redrawText(TT);
+            break;
+        }
         default:
 
             if(tolower(c) == 'd') {
