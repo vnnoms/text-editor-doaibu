@@ -252,9 +252,7 @@ void inputCharHandler(Tab *TT, int c) {
 
         // ESC -> keluar text editor
         case  27: {
-            for(int i=0; i<E.n_tabs; i++) freeTab(&E.tabs[i]);
-            clearScreen();
-            exit(0);
+            quitEditor();
             break;
         }
 

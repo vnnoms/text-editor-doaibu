@@ -39,6 +39,8 @@ void quitEditor() {
     scanf(" %c", &confirm);
     
     if (confirm == 'y' || confirm == 'Y') {
+        for(int i=0; i<E.n_tabs; i++) freeTab(&E.tabs[i]);
+        clearScreen();
         printf("\nTerima kasih telah menggunakan Text Editor Doa Ibu!\n");
         exit(0); 
     }
