@@ -155,3 +155,13 @@ int countActiveLines(Tab *TT) {
     
     return barisTerakhir + 1;
 }
+
+void renderFooter(Tab *TT) {
+    char statsBuffer[256];
+    snprintf(statsBuffer, sizeof(statsBuffer),
+    "Tab: %d | Chars: %d | Words: %d | Lines: %d | Col: %d",E.curr_tab + 1,countTotalChars(TT),countTotalWords(TT),countActiveLines(TT),TT->cursor_x);
+    printf("\033[s");
+    printf("\033[%d;1H\033[K%s", 3 + SCREEN_HEIGHT + 1, statsBuffer);
+    printf("\033[u");
+    fflush(stdout);
+}
