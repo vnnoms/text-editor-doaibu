@@ -50,23 +50,18 @@ bool tulisDataKeFile(Tab *TT, const char *jalur_file) {
 bool tampilkanDialogSimpan(char *alamat_tujuan) {
     OPENFILENAME jendela_simpan;
     char nama_file_pilihan[MAX_PATH] = {0};
-
     ZeroMemory(&jendela_simpan, sizeof(jendela_simpan));
     
     jendela_simpan.lStructSize = sizeof(jendela_simpan);
     jendela_simpan.hwndOwner = GetConsoleWindow();
     jendela_simpan.lpstrFile = nama_file_pilihan;
     jendela_simpan.nMaxFile = sizeof(nama_file_pilihan);
-    jendela_simpan.lpstrFilter = "File Teks (*.txt)\0*.txt\0Semua File (*.*)\0*.*\0";
+    jendela_simpan.lpstrFilter = "File Teks (*.txt)\0*.txt\0";
     jendela_simpan.nFilterIndex = 1;
+    jendela_simpan.lpstrDefExt = "txt";
     jendela_simpan.Flags = OFN_PATHMUSTEXIST | OFN_OVERWRITEPROMPT | OFN_NOCHANGEDIR;
 
     if (GetSaveFileName(&jendela_simpan)) {
-        
-        if (strstr(nama_file_pilihan, ".txt") == NULL && strstr(nama_file_pilihan, ".TXT") == NULL) {
-            strcat(nama_file_pilihan, ".txt");
-        }
-        
         strcpy(alamat_tujuan, nama_file_pilihan);
         return true;
     }
