@@ -77,7 +77,3 @@ void moveUp1Row(Tab *TT, int top, int bottom);
 void moveUpStatus(Tab *TT, int top, int bottom);
 
 #endif
-
-
-
-

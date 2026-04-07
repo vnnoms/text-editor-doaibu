@@ -6,8 +6,12 @@
 int main() {
     setStructEditor();
     addTab();
+
+    Tab *TT1 = &E.tabs[E.curr_tab];
+
     clearScreen();
     renderHeader();
+    renderFooter(TT1);
 
     while(1) {
         Tab *TT = &E.tabs[E.curr_tab];

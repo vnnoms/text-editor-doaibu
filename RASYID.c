@@ -138,7 +138,7 @@ void addTab() {
 	        TT->text[i][j] = '\0';  
 	}
 
-    TT->isNewLine = malloc(sizeof(bool*) * MAX_ROWS);
+    TT->isNewLine = malloc(sizeof(bool) * MAX_ROWS);
     for(int i = 0; i < MAX_ROWS; i++) TT->isNewLine[i] = false;
 
     TT->isNewLine[0] = true;
@@ -211,6 +211,7 @@ void inputCharHandler(Tab *TT, int c) {
             swicthTab(&TT, E.curr_tab + 1);
             break;
         }
+
         case 5: {// Ctrl + E 
             deleteLine(TT);
             break;
@@ -239,6 +240,11 @@ void inputCharHandler(Tab *TT, int c) {
         case  14: {
             addTab();
             swicthTab(&TT, E.curr_tab);
+            break;
+        }
+
+        case  15: { // Ctrl + O (load file)
+            bukaFile(TT);
             break;
         }
 
@@ -390,7 +396,7 @@ void findTailAfterCursor(Tab *TT, int cursor_y, int cursor_x) {
         lastY = MAX_ROWS - 1;
     }
 
-    // 🔍 cari karakter terakhir di baris lastY
+    // cari karakter terakhir di baris lastY
     for (int x = MAX_COLS - 2; x >= 0; x--) {
         if (text[lastY][x] != '\0') {
             lastX = x;

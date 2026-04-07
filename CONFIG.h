@@ -10,10 +10,10 @@
 
 // config var global 
 #define MAX_ROWS 100
-#define MAX_COLS 6
+#define MAX_COLS 100
 #define MAX_TABS 5
 #define MAX_PATH 260
-#define SCREEN_HEIGHT 5
+#define SCREEN_HEIGHT 20
 
 // define tab
 typedef struct {

@@ -40,19 +40,10 @@ bool bacaFileKeTab(Tab *TT, const char *lokasi_file) {
     FILE *f = fopen(lokasi_file, "r");
     if (f == NULL) return false;
 
-    // Bersihkan dulu seluruh isi Tab sebelum diisi data baru
-    for (int i = 0; i < MAX_ROWS; i++) {
-        clearSpecificRow(TT, i);
-        TT->isNewLine[i] = false;
-    }
-
     char c;
     int baris = 0;
     int kolom = 0;
     
-    // Baris pertama selalu dianggap awal paragraf baru
-    TT->isNewLine[0] = true;
-
     while ((c = fgetc(f)) != EOF && baris < MAX_ROWS) {
         if (c == '\n') {
             // Jika bertemu '\n', pindah ke baris baru dan tandai sebagai paragraf baru
@@ -83,31 +74,35 @@ bool bacaFileKeTab(Tab *TT, const char *lokasi_file) {
     return true;
 }
 
-void bukaFile() {
-    Tab *tabAktif = &E.tabs[E.curr_tab];
+void bukaFile(Tab *TT) {
+    if(E.n_tabs >= MAX_TABS) {
+        MessageBox(NULL, "Tab sudah penuh!", "Error", MB_OK | MB_ICONERROR);
+        return;
+    }
+
+    // Buat tab baru hanya jika tab saat ini SUDAH ADA ISI
+    char **text = E.tabs[E.curr_tab].text;
+    bool *line = E.tabs[E.curr_tab].isNewLine;
+    bool tabAktifAdaIsi = (text[0][0] != '\0' || line[1]);
+    if(tabAktifAdaIsi) {
+        addTab(); // curr_tab otomatis update di dalam addTab()
+    }
+
+    Tab *tabLoad = &E.tabs[E.curr_tab];
     char jalur_baru[MAX_PATH];
 
-    // 1. Munculkan jendela pilih file
     if (openFileDialog(jalur_baru)) {
-        // 2. Baca isinya ke dalam memori
-        if (bacaFileKeTab(tabAktif, jalur_baru)) {
-            // 3. Simpan lokasinya agar nanti tinggal 'Save' saja (bukan Save As)
-            strcpy(tabAktif->filename, jalur_baru);
-            
-            // 4. Reset kursor ke awal dokumen
-            tabAktif->cursor_x = 0;
-            tabAktif->cursor_y = 0;
-            
+        if (bacaFileKeTab(tabLoad, jalur_baru)) {
+            strcpy(tabLoad->filename, jalur_baru);
+            tabLoad->cursor_x = 0;
+            tabLoad->cursor_y = 0;
             MessageBox(NULL, "File Berhasil Dimuat!", "Notepad Doa Ibu", MB_OK | MB_ICONINFORMATION);
         } else {
             MessageBox(NULL, "Gagal membaca file!", "Error", MB_OK | MB_ICONERROR);
         }
     }
 
-    // Segarkan tampilan layar
-    clearScreen();
-    renderHeader();
-    redrawText(tabAktif);
+    swicthTab(&TT, E.curr_tab);
 }
 
 void quitEditor() {
@@ -122,6 +117,7 @@ void quitEditor() {
         exit(0); 
     }
 }
+
 char* cariAbaikanCase(char *teks, char *kataCari) {
     if (!*kataCari) return teks;
     for (; *teks; ++teks) {
