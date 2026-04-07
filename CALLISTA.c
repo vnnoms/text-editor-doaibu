@@ -81,7 +81,7 @@ void bukaFile(Tab *TT) {
     }
 
     // Buat tab baru hanya jika tab saat ini SUDAH ADA ISI
-    char **text = E.tabs[E.curr_tab].text;
+    char (*text)[MAX_COLS] = E.tabs[E.curr_tab].text;
     bool *line = E.tabs[E.curr_tab].isNewLine;
     bool tabAktifAdaIsi = (text[0][0] != '\0' || line[1]);
     if(tabAktifAdaIsi) {
@@ -111,7 +111,6 @@ void quitEditor() {
     scanf(" %c", &confirm);
     
     if (confirm == 'y' || confirm == 'Y') {
-        for(int i=0; i<E.n_tabs; i++) freeTab(&E.tabs[i]);
         clearScreen();
         printf("\nTerima kasih telah menggunakan Text Editor Doa Ibu!\n");
         exit(0); 

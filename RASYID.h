@@ -7,9 +7,6 @@
 int isCtrlPressed();
 int isAltPressed();
 
-// FREE
-void freeTab(Tab *TT);
-
 // RESET
 void resetTab(Tab *TT);
 

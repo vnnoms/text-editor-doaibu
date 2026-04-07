@@ -17,22 +17,20 @@ int isAltPressed() {
     return (GetAsyncKeyState(VK_MENU) & 0x8000);
 }
 
-// FREE
-
-void freeTab(Tab *TT) {
-    for(int i = 0; i < MAX_ROWS; i++) {
-        free(TT->text[i]);
-    }
-    free(TT->text);
-    free(TT->isNewLine);
-}
-
 // RESET
 
 void resetTab(Tab *TT) {
-    memset(TT, 0, sizeof(Tab));
-}
+    for(int i=0;i<MAX_ROWS;i++){
+        for(int j=0;j<MAX_COLS;j++)
+            TT->text[i][j] = '\0';
+        TT->isNewLine[i] = false;
+    }
 
+    TT->isNewLine[0] = true;
+    TT->cursor_x = 0;
+    TT->cursor_y = 0;
+    TT->filename[0] = '\0';
+}
 // SET
 
 void setStructEditor() {
@@ -126,64 +124,34 @@ void redrawText(Tab *TT) {
 }
 
 // TAB
-
+// cursor + filename belum diset
 void addTab() {
 	if(E.n_tabs >= MAX_TABS) return; 
-    Tab *TT = &E.tabs[E.n_tabs];       
 
-    TT->text = malloc(sizeof(char*) * MAX_ROWS);  
-	for(int i=0; i<MAX_ROWS; i++){
-	    TT->text[i] = malloc(sizeof(char) * MAX_COLS);
-	    for(int j=0; j<MAX_COLS; j++)
-	        TT->text[i][j] = '\0';  
-	}
-
-    TT->isNewLine = malloc(sizeof(bool) * MAX_ROWS);
-    for(int i = 0; i < MAX_ROWS; i++) TT->isNewLine[i] = false;
-
-    TT->isNewLine[0] = true;
+    Tab *TT = &E.tabs[E.n_tabs];
+    resetTab(TT);
 
     E.curr_tab = E.n_tabs;
-    (E.n_tabs)++;
+    E.n_tabs++;
 }
 
 void deleteTab(int idx) {
-    if(idx != 0 || E.tabs[idx].text[0][0] != '\0' || E.n_tabs > 0) {
-        Tab *TT = &E.tabs[idx];
-
-        if(E.n_tabs == 1 && idx == 0) {
-            for(int i=0; i<MAX_ROWS; i++){
-                for(int j=0; j<MAX_COLS; j++)
-                    TT->text[i][j] = '\0';  
-            }
-
-            for(int i = 0; i < MAX_ROWS; i++) TT->isNewLine[i] = false;
-            TT->isNewLine[0] = true;
-            TT->cursor_y = 0;
-            TT->cursor_x = 0;
-            TT->filename[0] = '\0';
-
-            return;
-        }
-
-        // free + reset dulu
-        freeTab(TT);
-        resetTab(&E.tabs[idx]);
-
-        // geser
-        for(int i = idx; i < E.n_tabs - 1; i++) {
-            E.tabs[i] = E.tabs[i+1];
-        }
-
-        if(idx < E.n_tabs - 1) {
-            Tab *LastTab = &E.tabs[E.n_tabs - 1];
-            resetTab(LastTab);
-        } else if(idx > 0) {
-            E.curr_tab--;
-        }
-
-        if(E.n_tabs>1) E.n_tabs--;
+    if(E.n_tabs <= 1) {
+        resetTab(&E.tabs[0]);
+        return;
     }
+
+    for(int i = idx; i < E.n_tabs - 1; i++) {
+        E.tabs[i] = E.tabs[i+1];
+    }
+
+    resetTab(&E.tabs[E.n_tabs - 1]);
+
+    if(idx == E.curr_tab && E.curr_tab > 0) {
+        E.curr_tab--;
+    }
+
+    E.n_tabs--;
 }
 
 void swicthTab(Tab **TT, int tabLoc) {
@@ -370,7 +338,7 @@ void arrowKeyHandler(Tab *TT,int c) {
 
 // Mencari posisi karakter terakhir di baris independent (isNewline = true) tertentu
 void findTailAfterCursor(Tab *TT, int cursor_y, int cursor_x) {
-    char **text = TT->text;
+    char (*text)[MAX_COLS] = TT->text;
 
     // Intial value buat kalo tidak ketemu karakter terakhir
     int lastY = -1;
@@ -436,7 +404,7 @@ int findLastRowFromDown(Tab *TT, int cursor_y) {
 }
 
 int findNTXInRow(Tab *TT, int y) {
-    char **text = TT->text;
+    char (*text)[MAX_COLS] = TT->text;
     for(int x = 0; x < MAX_COLS -1; x++) {
         if(text[y][x] == '\0') return x;
     }
@@ -450,7 +418,7 @@ int findNTXInRow(Tab *TT, int y) {
 void newline(Tab *TT) {
     int cursor_x = TT->cursor_x;
     int cursor_y = TT->cursor_y;
-    char **text = TT->text;
+    char (*text)[MAX_COLS] = TT->text;
     bool *NL = TT->isNewLine;
 
     // jika kursor berada di baris tidak independent (isNewline = false) serta di kolom pertama,
@@ -494,7 +462,7 @@ void newline(Tab *TT) {
 void merge2Rows(Tab *TT, int cursor_y, int cursor_x) {
     int pos_Y = E.pos_Y;
     int pos_X = E.pos_X;
-    char **text = TT->text;
+    char (*text)[MAX_COLS] = TT->text;
     int rowNL = -1;
 
     int merged_Y = cursor_y - 1;
@@ -546,7 +514,7 @@ void merge2Rows(Tab *TT, int cursor_y, int cursor_x) {
 void insert(Tab *TT, int cursor_y, int cursor_x, int c) {
     int pos_X =  E.pos_X;
     int pos_Y = E.pos_Y;
-    char **text = TT->text;
+    char (*text)[MAX_COLS] = TT->text;
     int rowNL = -1;
     
     // Jika posisi karakter berada di karakter kosong, maka tidak diswap
@@ -581,7 +549,7 @@ void insert(Tab *TT, int cursor_y, int cursor_x, int c) {
 // DELETE
 
 void delete(Tab *TT, int cursor_y, int cursor_x) {
-    char **text = TT->text;
+    char (*text)[MAX_COLS] = TT->text;
 
     if (cursor_y == 0 && cursor_x == 0) return;
 
@@ -652,7 +620,7 @@ void delete(Tab *TT, int cursor_y, int cursor_x) {
 // REMOVE
 
 void removeCache1Row(Tab *TT, int row, int col) {
-    char **text = TT->text;
+    char (*text)[MAX_COLS] = TT->text;
     for(int x = col; x < MAX_COLS-1; x++) {
         if (text[row][x] == '\0') break;
         text[row][x] = '\0';
@@ -664,7 +632,7 @@ void removeCache1Row(Tab *TT, int row, int col) {
 void swipeleft(Tab *TT, int cursor_y, int cursor_x) {
     int pos_Y = E.pos_Y;
     int pos_X = E.pos_X;
-    char **text = TT->text;
+    char (*text)[MAX_COLS] = TT->text;
 
     int needMoveUp = 0;
     int rowNL = -1;
@@ -715,7 +683,7 @@ void swipeleft(Tab *TT, int cursor_y, int cursor_x) {
 void swipeRight(Tab *TT, int cursor_y, int cursor_x) {
     int pos_X =  E.pos_X;
     int pos_Y = E.pos_Y;
-    char **text = TT->text;
+    char (*text)[MAX_COLS] = TT->text;
     int rowNL = -1;
 
     // swap character
@@ -751,7 +719,7 @@ void moveDown1Row(Tab *TT, int top, int bottom) {
     // start from bottom (move from bottom) :v
     if(bottom == MAX_ROWS-1) return;
 
-    char **text = TT->text;
+    char (*text)[MAX_COLS] = TT->text;
     for(int y=bottom; y >= top; y--) {
         for(int x = 0; x < MAX_COLS; x++) {
             text[y+1][x] = text[y][x];
@@ -777,7 +745,7 @@ void moveDownStatus(Tab *TT, int top, int bottom) {
 void moveUp1Row(Tab *TT, int top, int bottom) {
     if(top == 0) return;
 
-    char **text = TT->text;
+    char (*text)[MAX_COLS] = TT->text;
     for(int y=top; y <= bottom; y++) {
         for(int x = 0; x < MAX_COLS; x++) {
             text[y-1][x] = text[y][x];
