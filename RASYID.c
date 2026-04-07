@@ -20,11 +20,19 @@ int isAltPressed() {
 // FREE
 
 void freeTab(Tab *TT) {
-    for(int i = 0; i < MAX_ROWS; i++) {
-        free(TT->text[i]);
+    if (TT->text != NULL) {
+        for(int i = 0; i < MAX_ROWS; i++) {
+            if (TT->text[i] != NULL)
+                free(TT->text[i]);
+        }
+        free(TT->text);
+        TT->text = NULL;
     }
-    free(TT->text);
-    free(TT->isNewLine);
+
+    if (TT->isNewLine != NULL) {
+        free(TT->isNewLine);
+        TT->isNewLine = NULL;
+    }
 }
 
 // RESET
@@ -134,14 +142,16 @@ void addTab() {
     TT->text = malloc(sizeof(char*) * MAX_ROWS);  
 	for(int i=0; i<MAX_ROWS; i++){
 	    TT->text[i] = malloc(sizeof(char) * MAX_COLS);
-	    for(int j=0; j<MAX_COLS; j++)
-	        TT->text[i][j] = '\0';  
+	    for(int j=0; j<MAX_COLS; j++) TT->text[i][j] = '\0'; 
 	}
 
     TT->isNewLine = malloc(sizeof(bool) * MAX_ROWS);
     for(int i = 0; i < MAX_ROWS; i++) TT->isNewLine[i] = false;
 
     TT->isNewLine[0] = true;
+    TT->cursor_y = 0;
+    TT->cursor_x = 0;
+    TT->filename[0] = '\0';
 
     E.curr_tab = E.n_tabs;
     (E.n_tabs)++;
@@ -153,11 +163,10 @@ void deleteTab(int idx) {
 
         if(E.n_tabs == 1 && idx == 0) {
             for(int i=0; i<MAX_ROWS; i++){
-                for(int j=0; j<MAX_COLS; j++)
-                    TT->text[i][j] = '\0';  
+                for(int j=0; j<MAX_COLS; j++) TT->text[i][j] = '\0';  
+                TT->isNewLine[i] = false;
             }
 
-            for(int i = 0; i < MAX_ROWS; i++) TT->isNewLine[i] = false;
             TT->isNewLine[0] = true;
             TT->cursor_y = 0;
             TT->cursor_x = 0;
@@ -202,22 +211,26 @@ void swicthTab(Tab **TT, int tabLoc) {
 
 void inputCharHandler(Tab *TT, int c) {
     switch (c) { 
-        case  1 : { // Ctrl + A
+        // Ctrl + A (Pindah Tab Ke Kiri)
+        case  1 : { 
             swicthTab(&TT, E.curr_tab - 1);
             break;
         }
 
-        case  4 : { // Ctrl + D
+        // Ctrl + D (Pindah Tab Ke Kanan)
+        case  4 : {
             swicthTab(&TT, E.curr_tab + 1);
             break;
         }
 
-        case 5: {// Ctrl + E 
+        // Ctrl + E (Delete Line)
+        case 5: {
             deleteLine(TT);
             break;
         }
 
-        case 8: {// 
+        // Backspace 
+        case 8: { 
             findTailAfterCursor(TT, TT->cursor_y, TT->cursor_x);
             if(E.pos_Y >= 0) {
                 delete(TT, TT->cursor_y, TT->cursor_x);
@@ -237,22 +250,26 @@ void inputCharHandler(Tab *TT, int c) {
             break;
         }
 
+        // New Tab (Buat Tab)
         case  14: {
             addTab();
             swicthTab(&TT, E.curr_tab);
             break;
         }
 
-        case  15: { // Ctrl + O (load file)
+        // Ctrl + O (Load File)
+        case  15: { 
             bukaFile(TT);
             break;
         }
 
-        case 19: // Kode ASCII untuk Ctrl + S
+        // Ctrl + S (Save File)
+        case 19: 
             saveFile();
             break;
 
-        case 23: // Kode ASCII untuk Ctrl + W (Simpan Sebagai)
+        // Ctrl + W (Save As File)
+        case 23: 
             saveFileAs();
             break;
 
@@ -262,7 +279,7 @@ void inputCharHandler(Tab *TT, int c) {
             break;
         }
 
-
+        // Ctrl + F (Find)
         case 6 : {
             clearScreen(); 
             findText(TT);
@@ -276,7 +293,7 @@ void inputCharHandler(Tab *TT, int c) {
             break;
         }
         default:
-
+            // Alt + D (Hapus Tab)
             if(tolower(c) == 'd') {
                 if (isAltPressed()) {
                     deleteTab(E.curr_tab);
@@ -284,6 +301,7 @@ void inputCharHandler(Tab *TT, int c) {
                 }
             }
 
+            // Alt 1-5 (Pindah Tab 1-5)
             if (c >= '1' && c <= '5') {
                 if (isAltPressed()) {
                     int tab = (c - '0') - 1;
