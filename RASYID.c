@@ -147,7 +147,7 @@ void deleteTab(int idx) {
 
     resetTab(&E.tabs[E.n_tabs - 1]);
 
-    if(idx == E.curr_tab && E.curr_tab > 0) {
+    if(idx == E.n_tabs - 1) {
         E.curr_tab--;
     }
 
@@ -278,7 +278,7 @@ void inputCharHandler(Tab *TT, int c) {
 
 void arrowKeyHandler(Tab *TT,int c) {
     switch (c) {  
-        // arrow down
+        // arrow up
         case 72 : {
             // ini mmasih perlu dikembangin lagi
             if(TT->cursor_y> 0) {
@@ -291,7 +291,7 @@ void arrowKeyHandler(Tab *TT,int c) {
             break;
         }
 
-        // arrow up
+        // arrow down
         case 80 : {
             if(TT->cursor_y < MAX_ROWS - 1) {
                 if (TT->text[TT->cursor_y+1][TT->cursor_x] != '\0') TT->cursor_y++;
@@ -606,7 +606,7 @@ void delete(Tab *TT, int cursor_y, int cursor_x) {
             TT->cursor_x = MAX_COLS-1;
             TT->cursor_y--;
 
-            if((rowNL = findRowNLFromTop(TT, cursor_y + 1)) >= 0) {
+            if((rowNL = findRowNLFromTop(TT, cursor_y)) >= 0) {
                 int lastRow = findLastRowFromDown(TT, cursor_y);
                 moveUp1Row(TT, rowNL, lastRow);
             }                   
